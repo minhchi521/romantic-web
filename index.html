@@ -812,6 +812,123 @@
     pointer-events: none; z-index: 5;
     border-radius: 28px;
   }
+
+  /* ===== ASK-OUT BOX ===== */
+  #ask-overlay {
+    position: absolute; inset: 0;
+    background: rgba(8,6,20,0.55);
+    backdrop-filter: blur(2px);
+    z-index: 40;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 28px;
+    opacity: 0; visibility: hidden;
+    transition: opacity .4s ease, visibility .4s;
+  }
+  #ask-overlay.show { opacity: 1; visibility: visible; }
+  #ask-overlay.answered { pointer-events: none; }
+
+  .ask-card {
+    position: relative;
+    background: linear-gradient(160deg, rgba(40,10,40,0.92), rgba(20,10,45,0.92));
+    border: 1px solid rgba(255,182,193,0.35);
+    border-radius: 26px;
+    padding: 34px 40px 30px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(255,105,180,0.25);
+    max-width: 420px;
+    transform: scale(0.85);
+    animation: askPop .5s cubic-bezier(.34,1.6,.64,1) forwards;
+    overflow: visible;
+  }
+  @keyframes askPop { to { transform: scale(1); } }
+
+  .ask-icon {
+    font-size: 44px;
+    margin-bottom: 10px;
+    animation: askIconBounce 1.6s ease-in-out infinite;
+  }
+  @keyframes askIconBounce { 0%,100%{transform:translateY(0) rotate(-4deg)} 50%{transform:translateY(-8px) rotate(4deg)} }
+
+  .ask-question {
+    font-size: 19px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    margin-bottom: 26px;
+    line-height: 1.5;
+  }
+
+  .ask-btn-row {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 22px;
+    height: 54px;
+  }
+
+  .ask-btn {
+    padding: 13px 30px;
+    border: none;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: .3px;
+  }
+
+  #ask-yes {
+    background: linear-gradient(135deg, #43e97b, #38f9d7);
+    color: #063a24;
+    box-shadow: 0 4px 20px rgba(67,233,123,0.4);
+    transition: transform .2s;
+    animation: yesPulse 1.8s ease-in-out infinite;
+  }
+  #ask-yes:hover { transform: scale(1.08); }
+  @keyframes yesPulse {
+    0%,100% { box-shadow: 0 4px 20px rgba(67,233,123,0.4); }
+    50% { box-shadow: 0 4px 34px rgba(67,233,123,0.7); }
+  }
+
+  #ask-no {
+    position: absolute;
+    top: 0; left: 50%;
+    margin-left: 60px;
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.85);
+    border: 1px solid rgba(255,255,255,0.25);
+    transition: transform .18s ease-out, left .18s ease-out, top .18s ease-out;
+    white-space: nowrap;
+  }
+
+  .ask-hint {
+    margin-top: 18px;
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: .2px;
+  }
+
+  #ask-success {
+    display: none;
+  }
+  #ask-overlay.answered #ask-success {
+    display: block;
+  }
+  #ask-overlay.answered .ask-pre-answer { display: none; }
+
+  .ask-success-icon {
+    font-size: 54px;
+    margin-bottom: 8px;
+    animation: successBounce .6s cubic-bezier(.34,1.8,.64,1);
+  }
+  @keyframes successBounce { 0%{transform:scale(0)} 60%{transform:scale(1.25)} 100%{transform:scale(1)} }
+
+  .ask-success-text {
+    font-size: 19px;
+    font-weight: 700;
+    color: #FFD600;
+    text-shadow: 0 0 16px rgba(255,214,0,0.5);
+  }
 </style>
 </head>
 <body>
@@ -1018,6 +1135,25 @@
     </div>
   </div>
 
+  <!-- Ask-out overlay -->
+  <div id="ask-overlay">
+    <div class="ask-card">
+      <div class="ask-pre-answer">
+        <div class="ask-icon">🥺</div>
+        <p class="ask-question">Em có chấp nhận đi chơi với anh không?</p>
+        <div class="ask-btn-row">
+          <button id="ask-yes" onclick="acceptAsk(event)">Có ạ 💖</button>
+          <button id="ask-no" onmouseenter="dodgeNo(event)" onclick="dodgeNo(event)" ontouchstart="dodgeNo(event)">Không 😅</button>
+        </div>
+        <p class="ask-hint">nhích lại gần nút "Không" thử xem 😏</p>
+      </div>
+      <div id="ask-success">
+        <div class="ask-success-icon">🥰</div>
+        <p class="ask-success-text">Yay! Hẹn em nhé! 💕</p>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -1048,6 +1184,7 @@ function startScene() {
   createStars();
   createFireflies();
   startPetals();
+  setTimeout(() => { document.getElementById('ask-overlay').classList.add('show'); }, 1600);
 }
 
 function toggleDayNight(e) {
@@ -1061,6 +1198,7 @@ function toggleDayNight(e) {
 
 stage.addEventListener('click', function(e) {
   if (!sceneStarted) return;
+  if (e.target.closest('#ask-overlay')) return;
   addRipple(e);
   spawnHearts(e);
   msgIdx = (msgIdx + 1) % MESSAGES.length;
@@ -1245,6 +1383,42 @@ function startPetals() {
   loop();
 }
 
+/* ===== ASK-OUT YES/NO ===== */
+function acceptAsk(e) {
+  e.stopPropagation();
+  const overlay = document.getElementById('ask-overlay');
+  overlay.classList.add('answered');
+  spawnHearts(e);
+  const rect = stage.getBoundingClientRect();
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      launchHeartBurst(350 + (Math.random()-0.5)*160, 260 + (Math.random()-0.5)*100);
+    }, i * 260);
+  }
+  setTimeout(() => overlay.classList.remove('show'), 2800);
+}
+
+function dodgeNo(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const btn = document.getElementById('ask-no');
+  const row = document.querySelector('.ask-btn-row');
+  const rowRect = row.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+
+  const maxX = rowRect.width - btnRect.width - 4;
+  const maxY = 40;
+  const newX = Math.random() * maxX;
+  const newY = (Math.random() - 0.5) * maxY;
+
+  btn.style.left = newX + 'px';
+  btn.style.marginLeft = '0px';
+  btn.style.top = (newY) + 'px';
+
+  const teases = ['Không 😅','Hông chịu đou','Đừng mà 🥹','Chạy nè!','Bắt được hông?','Thử lại đi 😜','Hihi trượt rồi'];
+  btn.textContent = teases[Math.floor(Math.random()*teases.length)];
+}
+
 /* ===== COUNTRY WHEEL ===== */
 const COUNTRIES = [
   {name:'Việt Nam', flag:'🇻🇳'},
@@ -1397,7 +1571,7 @@ let holdTimer = null;
 let fireworkInterval = null;
 
 function startHold(e) {
-  if (e.target.closest('#train, #wheel-overlay, #toggle-btn, #wheel-toggle-btn, .intro-btn')) return;
+  if (e.target.closest('#train, #wheel-overlay, #toggle-btn, #wheel-toggle-btn, .intro-btn, #ask-overlay')) return;
   const rect = stage.getBoundingClientRect();
   const x = (e.clientX !== undefined ? e.clientX : e.touches[0].clientX) - rect.left;
   const y = (e.clientY !== undefined ? e.clientY : e.touches[0].clientY) - rect.top;
